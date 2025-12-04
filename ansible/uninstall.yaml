@@ -1,0 +1,10 @@
+- name: Uninstall K3s
+  hosts: master_nodes,worker_nodes
+  become: true
+  tasks:
+    - name: Execute uninstall script
+      ansible.builtin.shell: "{{ 'k3s-agent-uninstall.sh' if 'worker_nodes' in group_names else 'k3s-uninstall.sh' }}"
+      register: script_result
+    - name: Display output
+      ansible.builtin.debug:
+        msg: "{{ script_result.stderr.split('\n') }}"

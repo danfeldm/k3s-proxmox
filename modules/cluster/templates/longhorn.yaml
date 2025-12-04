@@ -1,0 +1,33 @@
+#cloud-config
+timezone: ${timezone}
+users:
+  - default
+  - name: ${username}
+    groups:
+      - sudo
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_key}
+    sudo: ALL=(ALL) NOPASSWD:ALL
+package_update: true
+packages:
+  - qemu-guest-agent
+  - open-iscsi
+  - nfs-common
+  - python3
+runcmd:
+  - systemctl start iscsid
+  - systemctl stop multipathd
+  - systemctl stop multipathd.socket
+  - systemctl disable multipathd
+  - systemctl disable multipathd.socket
+  - modprobe iscsi_tcp
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+fs_setup:
+  - label: longhorn
+    filesystem: ext4
+    device: /dev/disk/by-id/virtio-longhorn-disk
+    overwrite: true
+mounts:
+  - ["LABEL=longhorn", ${longhorn_storage}, auto, "defaults,discard", "0", "0"]

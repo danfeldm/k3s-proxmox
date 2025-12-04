@@ -1,0 +1,60 @@
+
+- name: Set hostnames on all nodes
+  become: true
+  hosts: all
+  tasks:
+  - name: Set hostname
+    ansible.builtin.hostname:
+      name: "{{ inventory_hostname }}"
+
+
+- name: Boostrap K3s on first master node
+  become: true
+  hosts: master-node-1
+  tasks:
+  - name: Install K3s
+    ansible.builtin.shell: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -s - server {{ k3s_master_args | default('') }} --cluster-init
+    register: script_result
+
+  - name: Display K3s script output
+    ansible.builtin.debug:
+      msg: "{{ script_result.stdout.split('\n') }}"
+
+  - name: Fetch K3s token
+    ansible.builtin.slurp:
+      src: /var/lib/rancher/k3s/server/node-token
+
+    register: k3s_token_file
+  - name: Save K3s token
+    ansible.builtin.set_fact:
+      k3s_token: "{{ k3s_token_file.content | b64decode | regex_replace('\n','') }}"
+
+
+- name: Install K3s on remaining master nodes
+  become: true
+  hosts: master_nodes:!master-node-1
+  tasks:
+  - name: Install K3s
+    ansible.builtin.shell: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} K3S_TOKEN={{ hostvars['master-node-1']['k3s_token'] }} K3S_URL={{ k3s_url }} sh -s - server {{ k3s_master_args | default('') }}
+    register: script_result
+
+  - name: Display K3s script output
+    ansible.builtin.debug:
+      msg: "{{ script_result.stdout.split('\n') }}"
+
+
+- name: Install K3s on worker nodes
+  become: true
+  hosts: worker_nodes
+  tasks:
+  - name: Install K3s
+    ansible.builtin.shell: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} K3S_TOKEN={{ hostvars['master-node-1']['k3s_token'] }} K3S_URL={{ k3s_url }} sh -s - {{ k3s_worker_args | default('') }}
+    register: script_result
+    
+  - name: Display K3s script output
+    ansible.builtin.debug:
+      msg: "{{ script_result.stdout.split('\n') }}"
+
+
+- name: Copy kubeconfig to ~/.kube/config
+  ansible.builtin.import_playbook: kubeconfig.yaml
