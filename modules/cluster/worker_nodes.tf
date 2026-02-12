@@ -1,6 +1,6 @@
 resource "proxmox_virtual_environment_vm" "worker_nodes" {
-  for_each = local.worker_nodes
-  name      = each.key
+  count = length(var.worker_node_ips)
+  name      = "worker-node-${count.index+1}"
   node_name = var.proxmox_node_name
   tags      = var.worker_node_config.tags
 
@@ -38,7 +38,7 @@ resource "proxmox_virtual_environment_vm" "worker_nodes" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${each.value}/24"
+        address = "${var.worker_node_ips[count.index]}/24"
         gateway = var.default_gateway
       }
     }

@@ -64,16 +64,7 @@ ansible-inventory -i inventory.yaml --graph --vars
 ```
 Set Ansible variables in `./group_vars/all.yaml`
 
-```yaml
-k3s_version: v1.34.2+k3s1
 
-#registration address for cluster
-k3s_url: https://{{ hostvars['master-node-1']['ansible_host'] }}:6443
-
-k3s_master_args: "--disable=traefik --disable=servicelb --node-taint=CriticalAddonsOnly=true:NoExecute"
-
-k3s_worker_args: "--node-label node.longhorn.io/create-default-disk=true"
-```
 To provision the cluster:
 ```
 ansible-playbook cluster.yaml
@@ -97,7 +88,7 @@ Next, apply the ArgoCD ApplicationSet
 
 ```
 kubectl apply -f app-set.yaml
-```
+```ssh
 
 The ApplicationSet is set up to watch all subdirectories in `/argocd/charts`
 

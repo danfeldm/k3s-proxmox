@@ -1,8 +1,15 @@
-k3s_version: v1.34.2+k3s1
+k3s_version: "{{ (lookup('url', 'https://api.github.com/repos/k3s-io/k3s/releases/latest') | from_json).tag_name }}"
 
 #registration address for cluster
 k3s_url: https://{{ hostvars['master-node-1']['ansible_host'] }}:6443
 
-k3s_master_args: "--disable=traefik --disable=servicelb --node-taint=CriticalAddonsOnly=true:NoExecute"
-
+k3s_master_args: >-
+  --disable=traefik
+  --disable=servicelb
+  --node-taint=CriticalAddonsOnly=true:NoExecute
+  --kube-controller-manager-arg=bind-address=0.0.0.0
+  --kube-proxy-arg=metrics-bind-address=0.0.0.0
+  --kube-scheduler-arg=bind-address=0.0.0.0
+  --etcd-expose-metrics=true
+  
 k3s_worker_args: "--node-label node.longhorn.io/create-default-disk=true"

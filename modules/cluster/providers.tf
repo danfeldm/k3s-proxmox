@@ -1,9 +1,9 @@
 terraform {
-  required_version = "~> 1.12.2"
+  required_version = "~> 1.14.3"
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.88.0"
+      version = "0.93.0"
     }
     ansible = {
       source  = "ansible/ansible"
